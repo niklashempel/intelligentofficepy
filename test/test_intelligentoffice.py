@@ -22,3 +22,54 @@ class TestIntelligentOffice(unittest.TestCase):
         sut = IntelligentOffice()
         with self.assertRaises(IntelligentOfficeError):
             sut.check_quadrant_occupancy(sut.LED_PIN)
+
+    @patch.object(SDL_DS3231, "read_datetime")
+    @patch.object(IntelligentOffice, "change_servo_angle")
+    def test_manage_blinds_based_on_time_open(self, mock_servo: Mock, mock_rtc: Mock):
+        date = datetime(2024, 11, 25, 8)
+        mock_rtc.return_value = date
+        sut = IntelligentOffice()
+        sut.manage_blinds_based_on_time()
+        self.assertTrue(sut.blinds_open)
+        mock_servo.assert_called_once_with(12)
+
+    @patch.object(SDL_DS3231, "read_datetime")
+    @patch.object(IntelligentOffice, "change_servo_angle")
+    def test_manage_blinds_based_on_time_before_8(self, mock_servo: Mock, mock_rtc: Mock):
+        date = datetime(2024, 11, 25, 7)
+        mock_rtc.return_value = date
+        sut = IntelligentOffice()
+        sut.manage_blinds_based_on_time()
+        self.assertFalse(sut.blinds_open)
+        mock_servo.assert_not_called()
+
+
+    @patch.object(SDL_DS3231, "read_datetime")
+    @patch.object(IntelligentOffice, "change_servo_angle")
+    def test_manage_blinds_based_on_time_close(self, mock_servo: Mock, mock_rtc: Mock):
+        date = datetime(2024, 11, 25, 20)
+        mock_rtc.return_value = date
+        sut = IntelligentOffice()
+        sut.manage_blinds_based_on_time()
+        self.assertFalse(sut.blinds_open)
+        mock_servo.assert_called_once_with(2)
+
+    @patch.object(SDL_DS3231, "read_datetime")
+    @patch.object(IntelligentOffice, "change_servo_angle")
+    def test_manage_blinds_based_on_time_after_20(self, mock_servo: Mock, mock_rtc: Mock):
+        date = datetime(2024, 11, 25, 21)
+        mock_rtc.return_value = date
+        sut = IntelligentOffice()
+        sut.manage_blinds_based_on_time()
+        self.assertFalse(sut.blinds_open)
+        mock_servo.assert_not_called()
+
+    @patch.object(SDL_DS3231, "read_datetime")
+    @patch.object(IntelligentOffice, "change_servo_angle")
+    def test_manage_blinds_based_on_time_do_nothing_on_weekend(self, mock_servo: Mock, mock_rtc: Mock):
+        date = datetime(2024, 11, 24, 8)
+        mock_rtc.return_value = date
+        sut = IntelligentOffice()
+        sut.manage_blinds_based_on_time()
+        self.assertFalse(sut.blinds_open)
+        mock_servo.assert_not_called()
