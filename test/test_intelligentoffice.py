@@ -119,3 +119,21 @@ class TestIntelligentOffice(unittest.TestCase):
         self.assertFalse(sut.light_on)
         mock_led.assert_called_once_with(sut.LED_PIN, False)
     
+    @patch.object(GPIO, "input")
+    @patch.object(GPIO, "output")
+    def test_monitor_air_quality_turn_on_buzzer(self, mock_buzzer: Mock, mock_gas_sensor: Mock):
+        mock_gas_sensor.return_value = False
+        sut = IntelligentOffice()
+        sut.monitor_air_quality()
+        self.assertTrue(sut.buzzer_on)
+        mock_buzzer.assert_called_with(sut.BUZZER_PIN, True)
+
+    @patch.object(GPIO, "input")
+    @patch.object(GPIO, "output")
+    def test_monitor_air_quality_turn_off_buzzer(self, mock_buzzer: Mock, mock_gas_sensor: Mock):
+        mock_gas_sensor.return_value = True
+        sut = IntelligentOffice()
+        sut.monitor_air_quality()
+        self.assertFalse(sut.buzzer_on)
+        mock_buzzer.assert_called_with(sut.BUZZER_PIN, False)
+
