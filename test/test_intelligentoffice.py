@@ -17,3 +17,8 @@ class TestIntelligentOffice(unittest.TestCase):
         self.assertTrue(sut.check_quadrant_occupancy(sut.INFRARED_PIN2))
         self.assertFalse(sut.check_quadrant_occupancy(sut.INFRARED_PIN3))
         self.assertTrue(sut.check_quadrant_occupancy(sut.INFRARED_PIN4))
+
+    def test_check_quadrant_occupancy_raises_error_with_wrong_pin(self):
+        sut = IntelligentOffice()
+        with self.assertRaises(IntelligentOfficeError):
+            sut.check_quadrant_occupancy(sut.LED_PIN)
