@@ -74,30 +74,48 @@ class TestIntelligentOffice(unittest.TestCase):
         self.assertFalse(sut.blinds_open)
         mock_servo.assert_not_called()
 
+    @patch.object(IntelligentOffice, "check_quadrant_occupancy")
     @patch.object(VEML7700, "lux", new_callable=PropertyMock)
     @patch.object(GPIO, "output")
-    def test_manage_light_level_turn_on(self, mock_led: Mock, mock_ambient_sensor: Mock):
+    def test_manage_light_level_turn_on(self, mock_led: Mock, mock_ambient_sensor: Mock, mock_check_quadrant_occupancy: Mock):
+        mock_check_quadrant_occupancy.return_value = True
         mock_ambient_sensor.return_value = 499
         sut = IntelligentOffice()
         sut.manage_light_level()
         self.assertTrue(sut.light_on)
         mock_led.assert_called_with(sut.LED_PIN, True)
 
+    @patch.object(IntelligentOffice, "check_quadrant_occupancy")
     @patch.object(VEML7700, "lux", new_callable=PropertyMock)
     @patch.object(GPIO, "output")
-    def test_manage_light_level_turn_off(self, mock_led: Mock, mock_ambient_sensor: Mock):
+    def test_manage_light_level_turn_off(self, mock_led: Mock, mock_ambient_sensor: Mock, mock_check_quadrant_occupancy: Mock):
+        mock_check_quadrant_occupancy.return_value = True
         mock_ambient_sensor.return_value = 551
         sut = IntelligentOffice()
         sut.manage_light_level()
         self.assertFalse(sut.light_on)
         mock_led.assert_called_with(sut.LED_PIN, False)
 
+    @patch.object(IntelligentOffice, "check_quadrant_occupancy")
     @patch.object(VEML7700, "lux", new_callable=PropertyMock)
     @patch.object(GPIO, "output")
-    def test_manage_light_level_do_nothing(self, mock_led: Mock, mock_ambient_sensor: Mock):
+    def test_manage_light_level_do_nothing(self, mock_led: Mock, mock_ambient_sensor: Mock, mock_check_quadrant_occupancy: Mock):
+        mock_check_quadrant_occupancy.return_value = True
         mock_ambient_sensor.side_effect = [500, 550]
         sut = IntelligentOffice()
         sut.manage_light_level()
         sut.manage_light_level()
         self.assertFalse(sut.light_on)
         mock_led.assert_not_called()
+
+    @patch.object(VEML7700, "lux", new_callable=PropertyMock)
+    @patch.object(IntelligentOffice, "check_quadrant_occupancy")
+    @patch.object(GPIO, "output")
+    def test_manage_light_level_turn_off_after_last_worker(self, mock_led: Mock, mock_check_quadrant_occupancy: Mock, mock_ambient_sensor: Mock):
+        mock_ambient_sensor.return_value = 499
+        mock_check_quadrant_occupancy.side_effect = [False, False, False, False]
+        sut = IntelligentOffice()
+        sut.manage_light_level()
+        self.assertFalse(sut.light_on)
+        mock_led.assert_called_once_with(sut.LED_PIN, False)
+    
