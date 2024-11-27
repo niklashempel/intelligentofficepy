@@ -73,3 +73,31 @@ class TestIntelligentOffice(unittest.TestCase):
         sut.manage_blinds_based_on_time()
         self.assertFalse(sut.blinds_open)
         mock_servo.assert_not_called()
+
+    @patch.object(VEML7700, "lux", new_callable=PropertyMock)
+    @patch.object(GPIO, "output")
+    def test_manage_light_level_turn_on(self, mock_led: Mock, mock_ambient_sensor: Mock):
+        mock_ambient_sensor.return_value = 499
+        sut = IntelligentOffice()
+        sut.manage_light_level()
+        self.assertTrue(sut.light_on)
+        mock_led.assert_called_with(sut.LED_PIN, True)
+
+    @patch.object(VEML7700, "lux", new_callable=PropertyMock)
+    @patch.object(GPIO, "output")
+    def test_manage_light_level_turn_off(self, mock_led: Mock, mock_ambient_sensor: Mock):
+        mock_ambient_sensor.return_value = 551
+        sut = IntelligentOffice()
+        sut.manage_light_level()
+        self.assertFalse(sut.light_on)
+        mock_led.assert_called_with(sut.LED_PIN, False)
+
+    @patch.object(VEML7700, "lux", new_callable=PropertyMock)
+    @patch.object(GPIO, "output")
+    def test_manage_light_level_do_nothing(self, mock_led: Mock, mock_ambient_sensor: Mock):
+        mock_ambient_sensor.side_effect = [500, 550]
+        sut = IntelligentOffice()
+        sut.manage_light_level()
+        sut.manage_light_level()
+        self.assertFalse(sut.light_on)
+        mock_led.assert_not_called()
